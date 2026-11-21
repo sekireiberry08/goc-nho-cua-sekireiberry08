@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="vi" data-theme="light">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f7f7f4">
+  <title>Cắt audio từ video</title>
+  <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
+  <main class="shell">
+    <header class="audio-header">
+      <div class="logo">A</div>
+      <div><h1 data-i18n="pageTitle">Cắt audio từ video</h1><p data-i18n="pageSubtitle">Chọn mốc thời gian và xuất âm thanh.</p></div>
+      <span class="local" data-i18n="localLabel">XỬ LÝ CỤC BỘ</span>
+    </header>
+    <section class="panel">
+      <h2>01 <span data-i18n="sourceHeading">Tệp video</span></h2>
+      <div class="upload" id="drop">
+        <input id="video" type="file" accept="video/*">
+        <div class="upload-icon">↑</div>
+        <strong data-i18n="dropPrompt">Kéo video vào đây hoặc chọn từ thiết bị</strong>
+        <small data-i18n="fileTypes">MP4, MOV, MKV, WebM · tối đa 1 GB</small>
+        <button class="secondary" id="choose" data-i18n="chooseVideo">Chọn video</button>
+      </div>
+      <div class="source-note"><b data-i18n="sourceNoteTitle">Lưu ý:</b> <span data-i18n="sourceNote">Tệp được tải lên từ thiết bị. Công cụ không tải video trực tiếp từ YouTube; chỉ sử dụng nội dung bạn có quyền xử lý.</span></div>
+      <div id="fileInfo" class="file-info hidden"></div>
+    </section>
+
+    <section class="panel">
+      <h2>02 <span data-i18n="selectionHeading">Chọn đoạn cần cắt</span></h2>
+      <div class="video-wrap"><video id="preview" controls></video><div id="emptyPreview" data-i18n="previewPlaceholder">Bản xem trước video sẽ hiển thị tại đây</div></div>
+      <div class="duration-row"><span><span data-i18n="durationLabel">Thời lượng</span>: <b id="duration">--:--</b></span><span><span data-i18n="currentTimeLabel">Thời điểm hiện tại</span>: <b id="current">00:00.00</b></span></div>
+      <div class="timeline-panel">
+        <div class="timeline-toolbar">
+          <div><strong data-i18n="timelineTitle">Dòng thời gian</strong><small data-i18n="timelineHint">Kéo hai tay nắm để chọn đoạn</small></div>
+          <label class="zoom-control"><span data-i18n="zoomLabel">Thu phóng</span> <input id="zoom" type="range" min="1" max="30" value="1"><b id="zoomValue">1×</b></label>
+        </div>
+        <div id="timelineScroll" class="timeline-scroll">
+          <div id="timelineRuler" class="timeline-ruler"></div>
+          <div id="timelineTrack" class="timeline-track">
+            <div id="timelineSelection" class="timeline-selection">
+              <button id="handleStart" class="timeline-handle left" aria-label="Kéo mốc bắt đầu" data-i18n-aria-label="startHandle"></button>
+              <button id="handleEnd" class="timeline-handle right" aria-label="Kéo mốc kết thúc" data-i18n-aria-label="endHandle"></button>
+            </div>
+          </div>
+        </div>
+        <div class="timeline-readout"><span><span data-i18n="startLabel">Bắt đầu</span><b id="timelineStart">0.00s</b></span><span><span data-i18n="lengthLabel">Độ dài</span><b id="timelineLength">0.00s</b></span><span><span data-i18n="endLabel">Kết thúc</span><b id="timelineEnd">0.00s</b></span></div>
+        <div class="timeline-actions"><button id="setStart" class="secondary" disabled data-i18n="setStart">Đặt mốc đầu tại thời điểm hiện tại</button><button id="setEnd" class="secondary" disabled data-i18n="setEnd">Đặt mốc cuối tại thời điểm hiện tại</button></div>
+      </div>
+      <div class="segment-head"><p data-i18n="segmentList">Danh sách đoạn</p><button id="add" class="secondary" disabled data-i18n="addSegment">＋ Thêm đoạn</button></div>
+      <div id="segments" class="segments"><div class="empty" data-i18n="uploadToStart">Tải video lên để bắt đầu.</div></div>
+      <div class="hint" data-i18n="segmentHint">Có thể nhập thời gian trực tiếp hoặc dùng các nút để lấy mốc từ vị trí phát hiện tại.</div>
+    </section>
+
+    <section class="panel">
+      <h2>03 <span data-i18n="exportHeading">Xuất âm thanh</span></h2>
+      <div class="export-row"><label for="format" data-i18n="formatLabel">Định dạng</label><select id="format"><option value="mp3" data-i18n="formatMp3">MP3 — dung lượng nhỏ</option><option value="wav" data-i18n="formatWav">WAV — không nén</option><option value="m4a" data-i18n="formatM4a">M4A — AAC</option></select></div>
+      <button id="cut" class="primary" disabled data-i18n="cutButton">Cắt và xuất âm thanh</button>
+      <div id="status" class="status" aria-live="polite"></div>
+      <a id="download" class="download hidden" href="#" data-i18n="downloadResult">↓ Tải kết quả</a>
+    </section>
+    <footer data-i18n="footer">Cắt audio · Xử lý trên thiết bị · FFmpeg</footer>
+  </main>
+  <script src="/static/app.js"></script>
+</body>
+</html>

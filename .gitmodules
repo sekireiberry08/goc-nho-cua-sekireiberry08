@@ -1,0 +1,6 @@
+[submodule "lich-su-dang-killer"]
+	path = lich-su-dang-killer
+	url = https://github.com/sekireiberry08/lich-su-dang-killer.git
+[submodule "quiz-mmt"]
+	path = quiz-mmt
+	url = https://github.com/NeyGun/quiz-mmt.git
