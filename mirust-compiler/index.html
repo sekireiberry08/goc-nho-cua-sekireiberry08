@@ -1,0 +1,299 @@
+<!doctype html>
+<html lang="vi">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>MiRust → Jasmin Compiler Lab</title>
+    <style>
+      :root {
+        color-scheme: dark;
+        --bg: #0b1020;
+        --panel: #131c30;
+        --line: #2b3a55;
+        --text: #e8eef8;
+        --muted: #9baac2;
+        --accent: #9cb7ff;
+        --good: #8ee0b2;
+        --bad: #ff9b9b;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        background:
+          radial-gradient(ellipse at 15% 0, #1c2a4b, transparent 45%), var(--bg);
+        color: var(--text);
+        font:
+          14px/1.5 system-ui,
+          sans-serif;
+      }
+      main {
+        max-width: 1440px;
+        margin: auto;
+        padding: 24px;
+      }
+      header {
+        display: flex;
+        justify-content: space-between;
+        gap: 16px;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+      h1 {
+        font-size: 24px;
+        margin: 0;
+      }
+      p {
+        color: var(--muted);
+        margin: 6px 0;
+      }
+      button,
+      select {
+        background: #253553;
+        color: var(--text);
+        border: 1px solid #405477;
+        border-radius: 9px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font: inherit;
+      }
+      button.primary {
+        background: #5674ce;
+        border-color: #7892e5;
+        font-weight: 700;
+      }
+      .bar {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+        margin: 14px 0;
+      }
+      .grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 14px;
+      }
+      .pane {
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 14px;
+        overflow: hidden;
+      }
+      .pane h2 {
+        font-size: 14px;
+        margin: 0;
+        padding: 12px 15px;
+        border-bottom: 1px solid var(--line);
+        color: #c9d6f2;
+      }
+      .pane textarea,
+      .pane pre {
+        width: 100%;
+        height: 62vh;
+        min-height: 420px;
+        margin: 0;
+        padding: 16px;
+        border: 0;
+        outline: 0;
+        resize: vertical;
+        background: #0d1526;
+        color: #e7edf8;
+        font:
+          13px/1.65 ui-monospace,
+          SFMono-Regular,
+          Menlo,
+          monospace;
+        tab-size: 4;
+        white-space: pre;
+        overflow: auto;
+      }
+      .pane pre {
+        white-space: pre;
+        overflow: auto;
+      }
+      .status {
+        padding: 10px 14px;
+        border-top: 1px solid var(--line);
+        color: var(--muted);
+        min-height: 42px;
+      }
+      .ok {
+        color: var(--good);
+      }
+      .err {
+        color: var(--bad);
+      }
+      details {
+        margin-top: 14px;
+        background: var(--panel);
+        border: 1px solid var(--line);
+        border-radius: 12px;
+        padding: 12px 15px;
+      }
+      summary {
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .note {
+        font-size: 12px;
+        color: var(--muted);
+      }
+      @media (max-width: 850px) {
+        .grid {
+          grid-template-columns: 1fr;
+        }
+        .pane textarea,
+        .pane pre {
+          height: 45vh;
+          min-height: 300px;
+        }
+        header {
+          align-items: flex-start;
+          flex-direction: column;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <header>
+        <div>
+          <h1>MiRust → Jasmin Compiler Lab</h1>
+          <p>Lexer → Parser → AST → kiểm tra kiểu cơ bản → Jasmin JVM</p>
+        </div>
+        <div class="bar">
+          <button id="sample">Nạp ví dụ</button
+          ><button class="primary" id="compile">Compile · ⌘ Enter</button>
+        </div>
+      </header>
+      <div class="bar">
+        <span class="note"
+          >MiRust subset hiện hỗ trợ: hàm, tham số, i32/bool/void, biến local,
+          gọi hàm, if/else, while, for-in, break/continue, return và
+          print_i32.</span
+        >
+      </div>
+      <section class="grid">
+        <div class="pane">
+          <h2>MiRust source</h2>
+          <textarea id="src" spellcheck="false"></textarea>
+          <div class="status" id="srcstatus">
+            Sẵn sàng. Tab thụt 4 spaces; Shift+Tab lùi indent.
+          </div>
+        </div>
+        <div class="pane">
+          <h2>Jasmin assembly</h2>
+          <pre id="out"></pre>
+          <div class="status" id="outstatus">Jasmin output chưa được tạo.</div>
+        </div>
+      </section>
+      <details>
+        <summary>AST (sau parsing)</summary>
+        <pre
+          id="ast"
+          style="white-space: pre-wrap; overflow: auto; color: #cbd8f4"
+        ></pre>
+      </details>
+      <details>
+        <summary>Phạm vi và giới hạn bản này</summary>
+        <p class="note">
+          Đây là compiler frontend/backend chạy local trong trình duyệt, không
+          cần server. Output là Jasmin assembly cho JVM, không phải Java source
+          giả lập. Chưa bao gồm global variables, struct/alias/Box, f32/string
+          literals, switch, arrays, ownership analysis, đầy đủ kiểm tra
+          definite-assignment, hoặc assembler/JVM tích hợp. Chưa thể gọi là
+          triển khai hoàn chỉnh toàn bộ MiRust v1.0.
+        </p>
+        <p class="note">
+          Để chạy output: lưu thành MiRustProgram.j, assemble bằng Jasmin, rồi
+          chạy class bằng JVM. Tính đúng đắn được bảo đảm trong tập con được hỗ
+          trợ; các tính năng ngoài phạm vi sẽ báo lỗi hoặc chưa được biên dịch.
+        </p>
+      </details>
+    </main>
+    <script src="compiler.js"></script>
+    <script>
+      const src = document.querySelector("#src"),
+        out = document.querySelector("#out"),
+        ast = document.querySelector("#ast"),
+        ss = document.querySelector("#srcstatus"),
+        os = document.querySelector("#outstatus");
+      const sample = `fn sum_to(n: i32) -> i32 {
+    let mut total: i32 = 0;
+    for (i in 0..n) {
+        total = total + i;
+    }
+    return total;
+}
+
+fn main() -> void {
+    let answer: i32 = sum_to(10);
+    println_i32(answer);
+}`;
+      src.value = sample;
+      function compile() {
+        try {
+          const result = compileMiRust(src.value);
+          out.textContent = result.jasmin;
+          ast.textContent = JSON.stringify(result.ast, null, 2);
+          ss.textContent = "Parsing + codegen thành công.";
+          ss.className = "status ok";
+          os.textContent =
+            "Đã sinh Jasmin. Hãy assemble/run để kiểm chứng trên JVM.";
+          os.className = "status ok";
+        } catch (e) {
+          out.textContent = "";
+          ast.textContent = "";
+          ss.textContent = e.message;
+          ss.className = "status err";
+          os.textContent = "Không sinh mã do lỗi.";
+          os.className = "status err";
+        }
+      }
+      document.querySelector("#compile").addEventListener("click", compile);
+      document.querySelector("#sample").addEventListener("click", () => {
+        src.value = sample;
+        compile();
+      });
+      src.addEventListener("keydown", (e) => {
+        if (e.key === "Enter" && (e.metaKey || e.ctrlKey)) {
+          e.preventDefault();
+          compile();
+          return;
+        }
+        if (e.key === "Tab") {
+          e.preventDefault();
+          const a = src.selectionStart,
+            b = src.selectionEnd,
+            v = src.value;
+          if (e.shiftKey) {
+            const lineStart = v.lastIndexOf("\n", a - 1) + 1;
+            const line = v.slice(lineStart, a);
+            const n = line.startsWith("    ")
+              ? 4
+              : line.startsWith("\t")
+                ? 1
+                : 0;
+            if (n) {
+              src.setRangeText(line.slice(n), lineStart, a, "start");
+            }
+          } else if (a === b) {
+            src.setRangeText("    ", a, b, "end");
+          } else {
+            const start = v.lastIndexOf("\n", a - 1) + 1,
+              end = v.indexOf("\n", b);
+            const stop = end < 0 ? v.length : end;
+            const block = v
+              .slice(start, stop)
+              .split("\n")
+              .map((x) => "    " + x)
+              .join("\n");
+            src.setRangeText(block, start, stop, "select");
+          }
+        }
+      });
+      compile();
+    </script>
+  </body>
+</html>

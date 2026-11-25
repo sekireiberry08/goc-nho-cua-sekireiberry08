@@ -1,74 +1,86 @@
 # Góc nhỏ của sekireiberry08
 
-Trang web local gộp bốn tiện ích vào cùng một giao diện tab:
+Cổng tiện ích học tập & công cụ lập trình cá nhân hợp nhất, xử lý 100% trên trình duyệt (Client-side) và tối ưu triển khai 1-click trên **Vercel**.
 
-- **Trích xuất PDF**: trích xuất văn bản, ảnh và OCR, xem Markdown và tải kết quả dạng ZIP.
-- **Cắt audio**: tải video từ máy, chọn một hoặc nhiều đoạn trên timeline rồi xuất MP3, WAV hoặc M4A.
-- **Ôn Lịch sử Đảng**: học trọng tâm, luyện timeline và quiz từ dữ liệu Excel.
-- **Ôn Mạng máy tính**: luyện ngân hàng câu hỏi theo chương và theo dõi tiến độ.
+---
 
-Hai ứng dụng ôn tập được quản lý dưới dạng Git submodule. Khi clone repo chính, lấy cả hai ứng dụng bằng:
+## 🌟 6 Tiện ích tích hợp
 
-```bash
-git clone --recurse-submodules https://github.com/sekireiberry08/goc-nho-cua-sekireiberry08.git
-```
+1. **🛠️ MiRust → Jasmin Compiler Lab (v4)**:
+   - Trình biên dịch ngôn ngữ MiRust sang bytecode Jasmin cho máy ảo Java (JVM).
+   - Pipeline: Lexer → Recursive-Descent & Pratt Parser → AST Inspector → Basic Type Checking → Jasmin JVM Codegen.
+   - Hỗ trợ hàm, tham số, đệ quy, `i32`/`bool`/`void`, biến `let`/`let mut`, `if/else`, `while`, `for in`, `switch/case/break`, in ấn `println_i32`.
+   - Tích hợp bộ kiểm thử tự động (Test Suite) và nạp mẫu code sẵn.
 
-Nếu đã clone repo chính, khởi tạo các submodule bằng `git submodule update --init --recursive`.
-Khi cập nhật ứng dụng con, hãy commit/push thay đổi trong repo con trước, sau đó cập nhật commit tham chiếu và push repo chính.
+2. **📚 Ôn Lịch Sử Đảng (SP1039 - HCMUT)**:
+   - Hệ thống học chủ động: Học lý thuyết trọng tâm theo Chuẩn đầu ra (CĐR), Game Timeline ghép nối sự kiện lịch sử, và Ngân hàng Quiz trắc nghiệm.
+   - Lọc theo từng chương hoặc toàn bộ ngân hàng câu hỏi, chế độ luyện riêng các câu làm sai.
+   - Tự động lưu tiến độ vào `localStorage` theo Guest ID, hỗ trợ xuất/sao lưu dữ liệu học tập JSON.
 
-Giao diện hỗ trợ Tiếng Việt và English, cùng chế độ sáng và tối. Lựa chọn được lưu trong trình duyệt.
+3. **🌐 Ôn Thi Mạng Máy Tính (MMT)**:
+   - Ngân hàng câu hỏi trắc nghiệm toàn diện 8 chương theo chương trình ĐH Bách Khoa TP.HCM.
+   - Chế độ kiểm tra đáp án tức thì (Instant Feedback) kèm giải thích chi tiết cơ chế hoạt động mạng.
+   - Thống kê tỷ lệ chính xác, lọc câu sai, làm lại chương.
 
-## Yêu cầu
+4. **📄 Trích Xuất Dữ Liệu PDF**:
+   - Trích xuất văn bản có cấu trúc từ tệp PDF trực tiếp bằng `pdfjs-dist`.
+   - Tự động định dạng sang Markdown và tải về trọn gói tệp nén ZIP (`document.md`, `metadata.json`).
+   - Xử lý 100% trong bộ nhớ trình duyệt, bảo mật riêng tư tuyệt đối.
 
-- Python 3.10+
+5. **✂️ Cắt & Trích Xuất Audio**:
+   - Trình phát video/audio tích hợp, chọn nhiều mốc thời gian (segments) linh hoạt.
+   - Sử dụng Web Audio API để giải mã và xuất âm thanh chất lượng cao chuẩn WAV (16-bit PCM) hoặc gói ZIP.
+   - Không yêu cầu cài đặt FFmpeg hay Python backend.
+
+---
+
+## 🚀 Tech Stack
+
+- **Frontend Framework:** React 19 + TypeScript + Vite 8
+- **Styling & UI:** Tailwind CSS v4 + Lucide React
+- **Client Libraries:**
+  - `pdfjs-dist`: Xử lý và trích xuất PDF client-side
+  - `jszip`: Nén và đóng gói ZIP trong bộ nhớ
+  - `xlsx`: Đọc dữ liệu ngân hàng đề thi Excel
+  - Web Audio API: Xử lý và cắt âm thanh trực tiếp
+- **Deployment:** Vercel (Single Page App với `vercel.json`)
+
+---
+
+## 💻 Hướng dẫn chạy Local
+
+### Yêu cầu
 - Node.js 20+
-- FFmpeg và `ffprobe` (cần cho tính năng cắt audio)
-- macOS: Homebrew
 
-Cài các công cụ hệ thống trên macOS:
+### Cài đặt và khởi chạy
 
 ```bash
-brew install ffmpeg tesseract tesseract-lang
+# 1. Cài đặt dependencies
+npm install
+
+# 2. Khởi chạy dev server
+npm run dev
 ```
 
-Tesseract chỉ cần nếu muốn nhận dạng chữ trong PDF scan. Các nền tảng khác có thể cài Python, Node.js, FFmpeg và Tesseract bằng trình quản lý gói tương ứng.
+Mở trình duyệt tại **http://127.0.0.1:5173**.
 
-## Cài đặt lần đầu
+Hoặc trên macOS, bạn chỉ cần nhấp đúp vào tệp **`start.command`**.
 
-Chạy tại thư mục gốc của dự án:
+---
 
-```bash
-python3 -m venv pdf-extractor/backend/.venv
-pdf-extractor/backend/.venv/bin/python -m pip install -r pdf-extractor/backend/requirements.txt
+## ☁️ Triển khai lên Vercel
 
-python3 -m venv youtube-audio-cutter/.venv
-youtube-audio-cutter/.venv/bin/python -m pip install -r youtube-audio-cutter/requirements.txt
+Dự án đã được cấu hình sẵn tệp `vercel.json`. Để triển khai:
 
-npm --prefix pdf-extractor/frontend install
-npm --prefix lich-su-dang-killer install
-```
-
-## Khởi chạy
-
-```bash
-./start.command
-```
-
-Mở **http://127.0.0.1:5173**. Chọn tính năng bằng các tab ở đầu trang. Dừng các dịch vụ bằng `Ctrl+C` trong cửa sổ Terminal.
-
-Lệnh chạy chung khởi động giao diện web và hai backend local:
-
-- Frontend: `127.0.0.1:5173`
-- Backend trích xuất PDF: `127.0.0.1:8000`
-- Backend cắt audio: `127.0.0.1:5001`
-- Ứng dụng ôn Lịch sử Đảng: `127.0.0.1:5174`
-- Ứng dụng ôn Mạng máy tính: `127.0.0.1:5175`
-
-Nếu một cổng đã được sử dụng, hãy dừng ứng dụng đang chiếm cổng đó trước khi khởi chạy. Các ứng dụng ôn tập được tải trong tab của giao diện chính; giao diện tối/sáng được đồng bộ với các tab này.
-
-## Lưu ý sử dụng
-
-- Tất cả xử lý chạy trên máy local. Tính năng cắt audio nhận video tải lên từ máy, **không tự tải hoặc rip video từ YouTube**; chỉ xử lý nội dung bạn có quyền sử dụng.
-- OCR PDF mặc định dùng ngôn ngữ `vie+eng`. Nếu thiếu dữ liệu tiếng Việt, có thể đặt `OCR_LANG=eng` khi chạy backend PDF.
-- File xuất PDF được lưu trong `pdf-extractor/backend/exports/`; video tải lên và audio đã cắt nằm trong `youtube-audio-cutter/uploads/` và `youtube-audio-cutter/outputs/`.
-- Hướng dẫn chi tiết cho từng tính năng: [PDF Extractor](pdf-extractor/README.md) và [AudioSlice](youtube-audio-cutter/README.md).
+1. Đẩy mã nguồn lên GitHub:
+   ```bash
+   git add .
+   git commit -m "feat: unify all tools into single Vite app for Vercel"
+   git push origin main
+   ```
+2. Trên Vercel, chọn **Import Project** từ GitHub repository `goc-nho-cua-sekireiberry08`.
+3. Vercel sẽ tự động nhận diện cấu hình:
+   - **Framework Preset:** Vite
+   - **Build Command:** `npm run build`
+   - **Output Directory:** `dist`
+4. Nhấn **Deploy** — website sẽ hoạt động toàn cầu trên CDN của Vercel!
