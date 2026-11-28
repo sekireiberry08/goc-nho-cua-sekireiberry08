@@ -10,8 +10,6 @@ import {
   ListTree,
   FileText,
   Terminal,
-  Sparkles,
-  Layers,
   ChevronDown,
   ChevronRight,
 } from "lucide-react";
@@ -115,13 +113,11 @@ const TEST_CASES = [
 export default function CompilerView() {
   const [sourceCode, setSourceCode] = useState(SAMPLES[0].code);
   const [jasminOutput, setJasminOutput] = useState("");
-  const [astOutput, setAstOutput] = useState<any>(null);
+  const [astOutput, setAstOutput] = useState<unknown>(null);
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<"jasmin" | "ast">("jasmin");
   const [copied, setCopied] = useState(false);
-  const [testResults, setTestResults] = useState<
-    { name: string; pass: boolean; error?: string }[] | null
-  >(null);
+  const [testResults, setTestResults] = useState<{ name: string; pass: boolean; error?: string }[] | null>(null);
   const [showDocs, setShowDocs] = useState(false);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -132,8 +128,8 @@ export default function CompilerView() {
       setJasminOutput(result.jasmin);
       setAstOutput(result.ast);
       setError(null);
-    } catch (err: any) {
-      setError(err?.message || "Lỗi biên dịch không xác định.");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Lỗi biên dịch không xác định.");
       setJasminOutput("");
       setAstOutput(null);
     }
@@ -164,29 +160,26 @@ export default function CompilerView() {
         const line = val.slice(lineStart, start);
         const n = line.startsWith("    ") ? 4 : line.startsWith("\t") ? 1 : 0;
         if (n) {
-          const nextVal = val.slice(0, lineStart) + val.slice(lineStart + n);
-          setSourceCode(nextVal);
+          setSourceCode(val.slice(0, lineStart) + val.slice(lineStart + n));
           setTimeout(() => {
             textarea.selectionStart = start - n;
             textarea.selectionEnd = end - n;
           }, 0);
         }
       } else if (start === end) {
-        const nextVal = val.slice(0, start) + "    " + val.slice(end);
-        setSourceCode(nextVal);
+        setSourceCode(val.slice(0, start) + "    " + val.slice(end));
         setTimeout(() => {
           textarea.selectionStart = textarea.selectionEnd = start + 4;
         }, 0);
       } else {
         const lineStart = val.lastIndexOf("\n", start - 1) + 1;
         const lineEnd = val.indexOf("\n", end) === -1 ? val.length : val.indexOf("\n", end);
-        const block = val.slice(lineStart, lineEnd);
-        const indented = block
+        const indented = val
+          .slice(lineStart, lineEnd)
           .split("\n")
           .map((line) => "    " + line)
           .join("\n");
-        const nextVal = val.slice(0, lineStart) + indented + val.slice(lineEnd);
-        setSourceCode(nextVal);
+        setSourceCode(val.slice(0, lineStart) + indented + val.slice(lineEnd));
         setTimeout(() => {
           textarea.selectionStart = lineStart;
           textarea.selectionEnd = lineStart + indented.length;
@@ -199,7 +192,7 @@ export default function CompilerView() {
     if (!jasminOutput) return;
     navigator.clipboard.writeText(jasminOutput);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    setTimeout(() => setCopied(false), 1800);
   };
 
   const downloadJasmin = () => {
@@ -222,65 +215,55 @@ export default function CompilerView() {
           return { name: tc.name, pass: false, error: "Thiếu lệnh: " + missing.join(", ") };
         }
         return { name: tc.name, pass: true };
-      } catch (e: any) {
-        return { name: tc.name, pass: false, error: e.message };
+      } catch (e: unknown) {
+        return { name: tc.name, pass: false, error: e instanceof Error ? e.message : "Error" };
       }
     });
     setTestResults(results);
   };
 
   return (
-    <div className="space-y-6">
-      {/* Header bar */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-slate-900/60 p-5 rounded-2xl border border-slate-800 shadow-sm">
+    <div className="space-y-4">
+      {/* Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <div className="flex items-center gap-2 text-indigo-400 text-sm font-semibold tracking-wider uppercase">
-            <Terminal className="w-4 h-4" />
-            <span>Compiler Lab v4 · MiRust to JVM Bytecode</span>
-          </div>
-          <h1 className="text-2xl font-bold text-slate-100 mt-1">
-            MiRust → Jasmin Compiler
-          </h1>
-          <p className="text-sm text-slate-400 mt-0.5">
-            Phân tích từ vựng (Lexer) → Cú pháp (Parser) → AST → Sinh mã Jasmin bytecode cho máy ảo Java (JVM).
+          <h1 className="text-xl font-semibold tracking-tight">MiRust → Jasmin Compiler</h1>
+          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+            Biên dịch ngôn ngữ MiRust sang JVM bytecode Jasmin ngay trên trình duyệt.
           </p>
         </div>
 
-        {/* Action Controls */}
         <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={() => handleCompile()}
-            className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-medium text-sm transition-all shadow-lg shadow-indigo-600/20 active:scale-95 cursor-pointer"
-            title="Nhấn Cmd+Enter hoặc Ctrl+Enter để biên dịch nhanh"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-indigo-600 hover:bg-indigo-500 text-white text-xs font-medium transition cursor-pointer"
           >
-            <Play className="w-4 h-4 fill-white" />
+            <Play className="w-3.5 h-3.5 fill-white" />
             <span>Biên dịch (⌘ Enter)</span>
           </button>
 
           <button
             onClick={runAllTests}
-            className="flex items-center gap-2 px-3.5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 text-sm font-medium transition cursor-pointer"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-xs font-medium transition cursor-pointer"
           >
-            <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-            <span>Chạy Test Suite</span>
+            <CheckCircle2 className="w-3.5 h-3.5 text-emerald-500" />
+            <span>Test Suite</span>
           </button>
 
           <button
             onClick={() => setShowDocs(!showDocs)}
-            className="flex items-center gap-1.5 px-3 py-2.5 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 border border-slate-700 text-sm transition cursor-pointer"
+            className="inline-flex items-center gap-1 px-3 py-1.5 rounded-lg border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-xs font-medium transition cursor-pointer"
           >
-            <FileText className="w-4 h-4 text-indigo-400" />
+            <FileText className="w-3.5 h-3.5 text-zinc-500" />
             <span>Ghi chú</span>
             {showDocs ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
           </button>
         </div>
       </div>
 
-      {/* Preset selector bar */}
-      <div className="flex flex-wrap items-center gap-2 px-1">
-        <span className="text-xs font-medium text-slate-400 uppercase tracking-wider mr-1">
-          Nạp mẫu code:
-        </span>
+      {/* Presets */}
+      <div className="flex flex-wrap items-center gap-1.5">
+        <span className="text-xs text-zinc-500 mr-1">Mẫu:</span>
         {SAMPLES.map((sample, idx) => (
           <button
             key={idx}
@@ -288,25 +271,21 @@ export default function CompilerView() {
               setSourceCode(sample.code);
               handleCompile(sample.code);
             }}
-            className="text-xs px-3 py-1.5 rounded-lg bg-slate-800/70 hover:bg-slate-700 text-slate-300 border border-slate-700/60 hover:border-indigo-500/50 transition cursor-pointer"
+            className="text-xs px-2.5 py-1 rounded-md border border-zinc-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 hover:bg-zinc-100 dark:hover:bg-zinc-800 transition cursor-pointer"
           >
             {sample.name}
           </button>
         ))}
       </div>
 
-      {/* Test Suite Modal / Result strip */}
+      {/* Test Results */}
       {testResults && (
-        <div className="bg-slate-900/90 border border-slate-800 rounded-xl p-4 shadow-lg animate-in fade-in">
-          <div className="flex items-center justify-between mb-2">
-            <span className="text-xs font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-1.5">
-              <CheckCircle2 className="w-4 h-4 text-emerald-400" />
-              Kết quả kiểm thử ({testResults.filter((r) => r.pass).length}/{testResults.length} ĐẠT)
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 space-y-2.5">
+          <div className="flex items-center justify-between text-xs font-semibold">
+            <span>
+              Kết quả kiểm thử ({testResults.filter((r) => r.pass).length}/{testResults.length} đạt)
             </span>
-            <button
-              onClick={() => setTestResults(null)}
-              className="text-xs text-slate-400 hover:text-slate-200"
-            >
+            <button onClick={() => setTestResults(null)} className="text-zinc-500 hover:text-zinc-700 cursor-pointer">
               Đóng
             </button>
           </div>
@@ -316,111 +295,95 @@ export default function CompilerView() {
                 key={i}
                 className={`p-2.5 rounded-lg border flex items-center justify-between ${
                   t.pass
-                    ? "bg-emerald-950/30 border-emerald-800/60 text-emerald-300"
-                    : "bg-rose-950/30 border-rose-800/60 text-rose-300"
+                    ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-600 dark:text-emerald-400"
+                    : "bg-rose-500/10 border-rose-500/30 text-rose-600 dark:text-rose-400"
                 }`}
               >
                 <span className="truncate mr-2">{t.name}</span>
-                <span className="font-bold text-[10px] px-1.5 py-0.5 rounded bg-black/30">
-                  {t.pass ? "PASS" : "FAIL"}
-                </span>
+                <span className="font-bold text-[10px]">{t.pass ? "PASS" : "FAIL"}</span>
               </div>
             ))}
           </div>
         </div>
       )}
 
-      {/* Main Two-Column Grid: Code Editor & Output */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
-        {/* Left Column: Source Editor */}
-        <div className="flex flex-col bg-slate-900/80 rounded-2xl border border-slate-800 shadow-md overflow-hidden">
-          <div className="flex items-center justify-between px-4 py-3 bg-slate-900 border-b border-slate-800 text-xs">
-            <div className="flex items-center gap-2 font-medium text-slate-300">
-              <FileCode className="w-4 h-4 text-indigo-400" />
-              <span>MiRust Source Code</span>
+      {/* Editor & Output */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        <div className="flex flex-col bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+          <div className="flex items-center justify-between px-4 py-2.5 border-b border-zinc-200 dark:border-zinc-800 text-xs">
+            <div className="flex items-center gap-2 font-medium">
+              <FileCode className="w-4 h-4 text-indigo-500" />
+              <span>MiRust Source</span>
             </div>
-            <span className="text-slate-500 text-[11px]">
-              Tab: 4 spaces · Shift+Tab: lùi indent
-            </span>
+            <span className="text-zinc-500 text-[11px]">Tab: 4 spaces</span>
           </div>
 
-          <div className="relative flex-1">
-            <textarea
-              ref={textareaRef}
-              value={sourceCode}
-              onChange={(e) => setSourceCode(e.target.value)}
-              onKeyDown={handleKeyDown}
-              spellCheck={false}
-              className="w-full h-[520px] p-4 bg-slate-950/70 text-slate-100 font-mono text-sm leading-relaxed outline-none resize-none selection:bg-indigo-600/40"
-              placeholder="// Nhập mã nguồn MiRust..."
-            />
-          </div>
+          <textarea
+            ref={textareaRef}
+            value={sourceCode}
+            onChange={(e) => setSourceCode(e.target.value)}
+            onKeyDown={handleKeyDown}
+            spellCheck={false}
+            className="w-full h-[460px] p-4 bg-zinc-50 dark:bg-zinc-950 font-mono text-sm leading-relaxed outline-none resize-none"
+            placeholder="// Nhập mã nguồn MiRust..."
+          />
 
-          {/* Source Status Bar */}
-          <div className="px-4 py-2.5 bg-slate-900/90 border-t border-slate-800 text-xs flex items-center justify-between">
+          <div className="px-4 py-2 border-t border-zinc-200 dark:border-zinc-800 text-xs flex items-center justify-between">
             {error ? (
-              <div className="flex items-center gap-1.5 text-rose-400 font-medium truncate">
+              <div className="flex items-center gap-1.5 text-rose-500 font-medium truncate">
                 <AlertCircle className="w-4 h-4 shrink-0" />
                 <span className="truncate">{error}</span>
               </div>
             ) : (
-              <div className="flex items-center gap-1.5 text-emerald-400 font-medium">
+              <div className="flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 font-medium">
                 <CheckCircle2 className="w-4 h-4 shrink-0" />
-                <span>Cú pháp hợp lệ · Sẵn sàng sinh mã Jasmin</span>
+                <span>Cú pháp hợp lệ</span>
               </div>
             )}
-            <span className="text-slate-500 text-[11px] shrink-0 ml-2">
-              {sourceCode.split("\n").length} dòng
-            </span>
+            <span className="text-zinc-500 text-[11px] shrink-0 ml-2">{sourceCode.split("\n").length} dòng</span>
           </div>
         </div>
 
-        {/* Right Column: Jasmin Bytecode & AST Viewer */}
-        <div className="flex flex-col bg-slate-900/80 rounded-2xl border border-slate-800 shadow-md overflow-hidden">
-          {/* Output Header Tabs */}
-          <div className="flex items-center justify-between px-4 py-2 bg-slate-900 border-b border-slate-800">
+        <div className="flex flex-col bg-white dark:bg-zinc-900 rounded-xl border border-zinc-200 dark:border-zinc-800 overflow-hidden">
+          <div className="flex items-center justify-between px-3 py-2 border-b border-zinc-200 dark:border-zinc-800">
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setActiveTab("jasmin")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer ${
                   activeTab === "jasmin"
-                    ? "bg-indigo-600/20 text-indigo-300 border border-indigo-500/30"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "bg-indigo-600 text-white"
+                    : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 }`}
               >
                 <Terminal className="w-3.5 h-3.5" />
-                <span>Jasmin Assembly (.j)</span>
+                <span>Jasmin (.j)</span>
               </button>
               <button
                 onClick={() => setActiveTab("ast")}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium cursor-pointer ${
                   activeTab === "ast"
-                    ? "bg-indigo-600/20 text-indigo-300 border border-indigo-500/30"
-                    : "text-slate-400 hover:text-slate-200"
+                    ? "bg-indigo-600 text-white"
+                    : "text-zinc-500 hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 }`}
               >
                 <ListTree className="w-3.5 h-3.5" />
-                <span>AST Tree</span>
+                <span>AST</span>
               </button>
             </div>
 
-            {/* Output Tools */}
             <div className="flex items-center gap-1.5">
               <button
                 onClick={copyJasmin}
                 disabled={!jasminOutput}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-300 text-xs transition cursor-pointer"
-                title="Sao chép Jasmin output"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 text-xs cursor-pointer"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-400" /> : <Copy className="w-3.5 h-3.5" />}
+                {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
                 <span>{copied ? "Đã chép" : "Chép"}</span>
               </button>
-
               <button
                 onClick={downloadJasmin}
                 disabled={!jasminOutput}
-                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 disabled:opacity-40 text-slate-300 text-xs transition cursor-pointer"
-                title="Tải file MiRustProgram.j"
+                className="inline-flex items-center gap-1 px-2.5 py-1 rounded-md border border-zinc-200 dark:border-zinc-700 hover:bg-zinc-100 dark:hover:bg-zinc-800 disabled:opacity-40 text-xs cursor-pointer"
               >
                 <Download className="w-3.5 h-3.5" />
                 <span>Tải .j</span>
@@ -428,65 +391,49 @@ export default function CompilerView() {
             </div>
           </div>
 
-          {/* Output Content */}
-          <div className="relative flex-1 bg-slate-950/70 overflow-auto h-[520px] p-4 text-xs font-mono">
+          <div className="flex-1 bg-zinc-50 dark:bg-zinc-950 overflow-auto h-[460px] p-4 text-xs font-mono">
             {error ? (
-              <div className="h-full flex flex-col items-center justify-center text-center p-6 text-slate-500">
-                <AlertCircle className="w-10 h-10 text-rose-500/80 mb-2" />
-                <p className="text-rose-400 font-semibold mb-1">Không thể sinh mã Jasmin</p>
-                <p className="text-xs text-slate-400 max-w-md">{error}</p>
+              <div className="h-full flex flex-col items-center justify-center text-center p-6 text-zinc-500">
+                <AlertCircle className="w-8 h-8 text-rose-500 mb-2" />
+                <p className="text-rose-500 font-medium mb-1">Không thể sinh mã Jasmin</p>
+                <p className="text-xs max-w-md">{error}</p>
               </div>
             ) : activeTab === "jasmin" ? (
-              jasminOutput ? (
-                <pre className="text-emerald-300/90 whitespace-pre leading-relaxed">
-                  {jasminOutput}
-                </pre>
-              ) : (
-                <div className="h-full flex items-center justify-center text-slate-500">
-                  Nhấn "Biên dịch" để xem Jasmin assembly.
-                </div>
-              )
-            ) : astOutput ? (
-              <pre className="text-sky-300/90 whitespace-pre-wrap leading-relaxed">
-                {JSON.stringify(astOutput, null, 2)}
+              <pre className="text-emerald-700 dark:text-emerald-300 whitespace-pre leading-relaxed">
+                {jasminOutput || "Nhấn Biên dịch để xem Jasmin assembly."}
               </pre>
             ) : (
-              <div className="h-full flex items-center justify-center text-slate-500">
-                Chưa có dữ liệu AST.
-              </div>
+              <pre className="text-sky-700 dark:text-sky-300 whitespace-pre-wrap leading-relaxed">
+                {astOutput ? JSON.stringify(astOutput, null, 2) : "Chưa có dữ liệu AST."}
+              </pre>
             )}
           </div>
 
-          {/* Output Status Bar */}
-          <div className="px-4 py-2.5 bg-slate-900/90 border-t border-slate-800 text-xs flex items-center justify-between text-slate-400">
-            <span>
-              {jasminOutput
-                ? `Đã tạo ${jasminOutput.split("\n").length} dòng mã Jasmin (.class public MiRustProgram)`
-                : "Chờ biên dịch..."}
-            </span>
-            <span className="text-[11px] text-slate-500">Target JVM: Java Bytecode</span>
+          <div className="px-4 py-2 border-t border-zinc-200 dark:border-zinc-800 text-xs flex items-center justify-between text-zinc-500">
+            <span>{jasminOutput ? `${jasminOutput.split("\n").length} dòng Jasmin` : "Chờ biên dịch"}</span>
+            <span>JVM Target</span>
           </div>
         </div>
       </div>
 
-      {/* Collapsible Info / Docs Section */}
       {showDocs && (
-        <div className="bg-slate-900/50 border border-slate-800 rounded-2xl p-5 text-sm space-y-3">
-          <h3 className="font-semibold text-slate-200 flex items-center gap-2">
-            <Sparkles className="w-4 h-4 text-indigo-400" />
-            Phạm vi ngôn ngữ & Hướng dẫn sử dụng
-          </h3>
-          <div className="text-xs text-slate-400 space-y-2 leading-relaxed">
-            <p>
-              • <strong>Tập con ngôn ngữ MiRust:</strong> Hỗ trợ khai báo hàm (<code className="text-indigo-300">fn</code>), tham số và kiểu trả về (<code className="text-indigo-300">i32</code>, <code className="text-indigo-300">bool</code>, <code className="text-indigo-300">void</code>), khai báo biến cục bộ (<code className="text-indigo-300">let</code>, <code className="text-indigo-300">let mut</code>), cấu trúc điều khiển (<code className="text-indigo-300">if/else</code>, <code className="text-indigo-300">while</code>, <code className="text-indigo-300">for in start..end</code>, <code className="text-indigo-300">switch/case/break</code>), và hàm in tích hợp (<code className="text-indigo-300">println_i32</code>, <code className="text-indigo-300">print_i32</code>, <code className="text-indigo-300">println</code>).
-            </p>
-            <p>
-              • <strong>Cách chạy mã Jasmin trên máy:</strong> Lưu output thành <code className="text-indigo-300">MiRustProgram.j</code>, dùng trình lắp ráp Jasmin để tạo file class: <code className="text-slate-300 bg-slate-800 px-1.5 py-0.5 rounded">java -jar jasmin.jar MiRustProgram.j</code>, sau đó chạy trực tiếp trên Java: <code className="text-slate-300 bg-slate-800 px-1.5 py-0.5 rounded">java MiRustProgram</code>.
-            </p>
-            <p>
-              • <strong>Hoàn toàn client-side:</strong> Toàn bộ quá trình Lexing, Parsing, kiểm tra kiểu dữ liệu tĩnh và sinh mã chạy 100% trên trình duyệt người dùng với độ trễ 0ms, không phụ thuộc máy chủ.
-            </p>
-          </div>
+        <div className="bg-white dark:bg-zinc-900 border border-zinc-200 dark:border-zinc-800 rounded-xl p-4 text-xs text-zinc-500 dark:text-zinc-400 space-y-1.5 leading-relaxed">
+          <p>
+            • Hỗ trợ <code className="font-mono text-indigo-500">fn</code>, kiểu{" "}
+            <code className="font-mono text-indigo-500">i32/bool/void</code>,{" "}
+            <code className="font-mono text-indigo-500">let/let mut</code>,{" "}
+            <code className="font-mono text-indigo-500">if/else</code>,{" "}
+            <code className="font-mono text-indigo-500">while</code>,{" "}
+            <code className="font-mono text-indigo-500">for in</code>,{" "}
+            <code className="font-mono text-indigo-500">switch/case/break</code>, và{" "}
+            <code className="font-mono text-indigo-500">println_i32</code>.
+          </p>
+          <p>
+            • Chạy file đã xuất:{" "}
+            <code className="font-mono px-1.5 py-0.5 rounded bg-zinc-100 dark:bg-zinc-800">
+              java -jar jasmin.jar MiRustProgram.j && java MiRustProgram
+            </code>
+          </p>
         </div>
       )}
     </div>

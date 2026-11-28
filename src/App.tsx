@@ -1,70 +1,37 @@
 import React, { useState, useEffect, lazy, Suspense } from "react";
 import {
-  Terminal,
-  BookOpen,
-  Network,
-  Ticket,
+  Film,
+  Eraser,
+  Captions,
   FileText,
-  Scissors,
+  Terminal,
   Sun,
   Moon,
-  ShieldCheck,
-  Sparkles,
-  Laptop,
+  Layers,
   Loader2,
 } from "lucide-react";
 
-const CompilerView = lazy(() => import("./modules/compiler/CompilerView"));
-const HistoryView = lazy(() => import("./modules/history/HistoryView"));
-const NetworksView = lazy(() => import("./modules/networks/NetworksView"));
-const PromoPilotView = lazy(() => import("./modules/promopilot/PromoPilotView"));
+const MediaStudioView = lazy(() => import("./modules/media/MediaStudioView"));
+const InpaintView = lazy(() => import("./modules/inpaint/InpaintView"));
+const VideoToTextView = lazy(() => import("./modules/transcribe/VideoToTextView"));
 const PdfView = lazy(() => import("./modules/pdf/PdfView"));
-const AudioView = lazy(() => import("./modules/audio/AudioView"));
+const CompilerView = lazy(() => import("./modules/compiler/CompilerView"));
 
-type TabKey = "compiler" | "history" | "networks" | "promopilot" | "pdf" | "audio";
+type TabKey = "media" | "inpaint" | "transcribe" | "pdf" | "compiler";
 
 interface TabDef {
   key: TabKey;
   label: string;
   shortLabel: string;
-  badge?: string;
   icon: React.ComponentType<{ className?: string }>;
 }
 
 const TABS: TabDef[] = [
-  {
-    key: "compiler",
-    label: "MiRust Compiler",
-    shortLabel: "Compiler",
-    badge: "v4",
-    icon: Terminal,
-  },
-  {
-    key: "history",
-    label: "Lịch Sử Đảng",
-    shortLabel: "LS Đảng",
-    badge: "SP1039",
-    icon: BookOpen,
-  },
-  {
-    key: "networks",
-    label: "Mạng Máy Tính",
-    shortLabel: "MMT",
-    badge: "8 Chương",
-    icon: Network,
-  },
-  {
-    key: "pdf",
-    label: "Trích Xuất PDF",
-    shortLabel: "PDF",
-    icon: FileText,
-  },
-  {
-    key: "audio",
-    label: "Cắt Audio",
-    shortLabel: "Audio",
-    icon: Scissors,
-  },
+  { key: "media", label: "Video & Audio", shortLabel: "Video/MP3", icon: Film },
+  { key: "inpaint", label: "Xoá vật thể", shortLabel: "Xoá ảnh", icon: Eraser },
+  { key: "transcribe", label: "Video → TXT", shortLabel: "Video→TXT", icon: Captions },
+  { key: "pdf", label: "PDF Studio", shortLabel: "PDF", icon: FileText },
+  { key: "compiler", label: "MiRust Compiler", shortLabel: "MiRust", icon: Terminal },
 ];
 
 export default function App() {
@@ -75,27 +42,19 @@ export default function App() {
       const saved = localStorage.getItem("goc-nho:active-tab") as TabKey;
       if (TABS.some((t) => t.key === saved)) return saved;
     }
-    return "compiler";
+    return "media";
   });
 
   const [theme, setTheme] = useState<"dark" | "light">(() => {
     if (typeof window !== "undefined") {
       const saved = localStorage.getItem("goc-nho:theme");
       if (saved === "light" || saved === "dark") return saved;
-      return "dark";
     }
     return "dark";
   });
 
   useEffect(() => {
     document.documentElement.setAttribute("data-theme", theme);
-    if (theme === "light") {
-      document.body.classList.remove("bg-slate-950", "text-slate-100");
-      document.body.classList.add("bg-slate-100", "text-slate-900");
-    } else {
-      document.body.classList.remove("bg-slate-100", "text-slate-900");
-      document.body.classList.add("bg-slate-950", "text-slate-100");
-    }
     localStorage.setItem("goc-nho:theme", theme);
   }, [theme]);
 
@@ -105,102 +64,73 @@ export default function App() {
     localStorage.setItem("goc-nho:active-tab", tab);
   };
 
-  const toggleTheme = () => {
-    setTheme((prev) => (prev === "dark" ? "light" : "dark"));
-  };
-
   return (
-    <div className={`min-h-screen flex flex-col ${theme === "light" ? "bg-slate-50 text-slate-900" : "bg-slate-950 text-slate-100"}`}>
-      {/* Top Navbar */}
-      <header className={`sticky top-0 z-40 backdrop-blur-md border-b transition-colors ${
-        theme === "light"
-          ? "bg-white/80 border-slate-200/80 shadow-xs"
-          : "bg-slate-950/80 border-slate-800/80 shadow-md shadow-black/20"
-      }`}>
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center justify-between h-16 gap-4">
-            {/* Brand Logo & Name */}
-            <div className="flex items-center gap-3 shrink-0">
-              <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 via-purple-600 to-pink-500 p-0.5 shadow-md shadow-indigo-500/20">
-                <div className="w-full h-full bg-slate-950 rounded-[10px] flex items-center justify-center">
-                  <Sparkles className="w-4 h-4 text-indigo-400" />
-                </div>
+    <div className="min-h-screen flex flex-col bg-zinc-50 dark:bg-zinc-950 text-zinc-900 dark:text-zinc-100 transition-colors">
+      {/* Clean Top Navigation */}
+      <header className="sticky top-0 z-40 bg-white/85 dark:bg-zinc-950/85 backdrop-blur-md border-b border-zinc-200 dark:border-zinc-800">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6">
+          <div className="flex items-center justify-between h-14 gap-4">
+            {/* Brand */}
+            <a
+              href="#media"
+              onClick={(e) => {
+                e.preventDefault();
+                handleSelectTab("media");
+              }}
+              className="flex items-center gap-2.5 shrink-0"
+            >
+              <div className="w-8 h-8 rounded-lg bg-indigo-600 text-white flex items-center justify-center">
+                <Layers className="w-4 h-4" />
               </div>
-              <div>
-                <a
-                  href="#"
-                  onClick={() => handleSelectTab("compiler")}
-                  className="font-bold text-base tracking-tight hover:opacity-90 flex items-center gap-1.5"
-                >
-                  <span>Góc nhỏ của sekireiberry08</span>
-                </a>
-                <p className="text-[11px] text-slate-500 hidden sm:block">
-                  Unified Developer & Student Workspace
-                </p>
-              </div>
-            </div>
+              <span className="font-semibold text-sm tracking-tight">Góc nhỏ của sekireiberry08</span>
+            </a>
 
-            {/* Desktop Navigation Tabs */}
-            <nav className="hidden lg:flex items-center gap-1 p-1 rounded-xl bg-slate-900/60 border border-slate-800/80">
+            {/* Desktop Tabs */}
+            <nav className="hidden md:flex items-center gap-1">
               {TABS.map((tab) => {
                 const Icon = tab.icon;
-                const isActive = activeTab === tab.key;
+                const active = activeTab === tab.key;
                 return (
                   <button
                     key={tab.key}
                     onClick={() => handleSelectTab(tab.key)}
-                    className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-semibold transition cursor-pointer ${
-                      isActive
-                        ? "bg-indigo-600 text-white shadow-sm shadow-indigo-600/30"
-                        : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/50"
+                    className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition cursor-pointer ${
+                      active
+                        ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                        : "text-zinc-600 dark:text-zinc-400 hover:text-zinc-900 dark:hover:text-zinc-100 hover:bg-zinc-100 dark:hover:bg-zinc-900"
                     }`}
                   >
                     <Icon className="w-3.5 h-3.5" />
                     <span>{tab.label}</span>
-                    {tab.badge && (
-                      <span className={`text-[10px] px-1 py-0.2 rounded font-mono ${
-                        isActive ? "bg-white/20 text-white" : "bg-slate-800 text-slate-400"
-                      }`}>
-                        {tab.badge}
-                      </span>
-                    )}
                   </button>
                 );
               })}
             </nav>
 
-            {/* Right Utilities */}
-            <div className="flex items-center gap-2">
-              <div className="hidden md:flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-950/40 border border-emerald-800/40 text-[11px] font-medium text-emerald-400">
-                <ShieldCheck className="w-3.5 h-3.5" />
-                <span>Vercel Ready · 100% Client-side</span>
-              </div>
-
-              {/* Theme Toggle */}
-              <button
-                onClick={toggleTheme}
-                className="p-2 rounded-xl bg-slate-800/60 hover:bg-slate-800 border border-slate-700/60 text-slate-300 transition cursor-pointer"
-                title={theme === "light" ? "Chuyển giao diện tối" : "Chuyển giao diện sáng"}
-                aria-label="Toggle Theme"
-              >
-                {theme === "light" ? <Moon className="w-4 h-4 text-amber-500" /> : <Sun className="w-4 h-4 text-amber-400" />}
-              </button>
-            </div>
+            {/* Theme Toggle */}
+            <button
+              onClick={() => setTheme((prev) => (prev === "dark" ? "light" : "dark"))}
+              className="p-2 rounded-lg border border-zinc-200 dark:border-zinc-800 hover:bg-zinc-100 dark:hover:bg-zinc-900 text-zinc-600 dark:text-zinc-400 transition cursor-pointer"
+              title={theme === "light" ? "Chuyển sang giao diện tối" : "Chuyển sang giao diện sáng"}
+              aria-label="Toggle Theme"
+            >
+              {theme === "light" ? <Moon className="w-4 h-4" /> : <Sun className="w-4 h-4" />}
+            </button>
           </div>
 
-          {/* Mobile Tab Strip */}
-          <div className="flex lg:hidden overflow-x-auto py-2 gap-1.5 border-t border-slate-800/40 no-scrollbar">
+          {/* Mobile Tabs */}
+          <div className="flex md:hidden overflow-x-auto py-2 gap-1.5 border-t border-zinc-200/70 dark:border-zinc-800/70 no-scrollbar">
             {TABS.map((tab) => {
               const Icon = tab.icon;
-              const isActive = activeTab === tab.key;
+              const active = activeTab === tab.key;
               return (
                 <button
                   key={tab.key}
                   onClick={() => handleSelectTab(tab.key)}
-                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold whitespace-nowrap transition cursor-pointer ${
-                    isActive
-                      ? "bg-indigo-600 text-white shadow-sm"
-                      : "text-slate-400 bg-slate-900/60 border border-slate-800"
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium whitespace-nowrap transition cursor-pointer ${
+                    active
+                      ? "bg-zinc-900 text-white dark:bg-zinc-100 dark:text-zinc-900"
+                      : "text-zinc-600 dark:text-zinc-400 bg-zinc-100 dark:bg-zinc-900"
                   }`}
                 >
                   <Icon className="w-3.5 h-3.5" />
@@ -212,41 +142,29 @@ export default function App() {
         </div>
       </header>
 
-      {/* Main Content Area with Suspense */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      {/* Main Content */}
+      <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 py-6">
         <Suspense
           fallback={
-            <div className="min-h-[500px] flex flex-col items-center justify-center text-slate-500 space-y-3">
-              <Loader2 className="w-8 h-8 animate-spin text-indigo-500" />
-              <span className="text-xs">Đang tải giao diện...</span>
+            <div className="min-h-[420px] flex flex-col items-center justify-center text-zinc-500 space-y-2">
+              <Loader2 className="w-6 h-6 animate-spin text-indigo-500" />
+              <span className="text-xs">Đang tải...</span>
             </div>
           }
         >
-          {activeTab === "compiler" && <CompilerView />}
-          {activeTab === "history" && <HistoryView />}
-          {activeTab === "networks" && <NetworksView />}
-          {activeTab === "promopilot" && <PromoPilotView />}
+          {activeTab === "media" && <MediaStudioView />}
+          {activeTab === "inpaint" && <InpaintView />}
+          {activeTab === "transcribe" && <VideoToTextView />}
           {activeTab === "pdf" && <PdfView />}
-          {activeTab === "audio" && <AudioView />}
+          {activeTab === "compiler" && <CompilerView />}
         </Suspense>
       </main>
 
-      {/* Global Footer */}
-      <footer className="mt-auto border-t border-slate-800/60 py-6 text-xs text-slate-500">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4">
-          <div className="flex items-center gap-2">
-            <span>© 2026 Góc nhỏ của sekireiberry08</span>
-            <span>•</span>
-            <span>Đại học Bách Khoa TP.HCM (HCMUT)</span>
-          </div>
-
-          <div className="flex items-center gap-4 text-slate-400">
-            <span className="flex items-center gap-1">
-              <Laptop className="w-3.5 h-3.5 text-indigo-400" /> React 19 + Vite + Tailwind CSS
-            </span>
-            <span>•</span>
-            <span className="text-emerald-400">Deployable on Vercel</span>
-          </div>
+      {/* Minimal Footer */}
+      <footer className="mt-auto border-t border-zinc-200 dark:border-zinc-800/80 py-4 text-xs text-zinc-500">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 flex items-center justify-between">
+          <span>© 2026 Góc nhỏ của sekireiberry08</span>
+          <span>5 công cụ hợp nhất</span>
         </div>
       </footer>
     </div>

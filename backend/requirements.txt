@@ -1,0 +1,6 @@
+Flask>=3.0,<4.0
+PyMuPDF>=1.24
+pytesseract>=0.3.10
+Pillow>=10.0
+requests>=2.31
+faster-whisper>=1.1,<2.0
